@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon %}
+{% set editing = item is defined and item %}
+{% block title %}{% if editing %}Edit report{% else %}Report a {{ item_type|lower }} item{% endif %} · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <div class="section-pill">{% if editing %}Update report{% else %}New {{ item_type|lower }} report{% endif %}</div>
+    <h1>{% if editing %}Edit “{{ item.item_name }}”{% elif item_type == 'Lost' %}Report a lost item{% else %}Report a found item{% endif %}</h1>
+    <p>
+      {% if editing %}Update the details below. Matches are recalculated automatically when you save.
+      {% elif item_type == 'Lost' %}The more detail you add, the better our matcher can connect your report with a found item.
+      {% else %}Thank you for doing the kind thing. Clear details help the real owner recognise their item quickly.{% endif %}
+    </p>
+  </div>
+</section>
+
+<div class="container" style="padding-bottom: 4rem;">
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1.5rem; align-items: start;" class="report-layout">
+    <form class="card card-pad" method="post"
+          action="{% if editing %}{{ url_for('edit_item', item_id=item.item_id) }}{% elif item_type == 'Lost' %}{{ url_for('report_lost') }}{% else %}{{ url_for('report_found') }}{% endif %}"
+          enctype="multipart/form-data" novalidate id="reportForm">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+      <div class="panel-title">
+        <h2>{{ icon('edit', 18) }} Item details</h2>
+        <span class="badge badge-{{ item_type|lower }}">{{ item_type }} report</span>
+      </div>
+
+      <div class="form-row">
+        <div class="field {% if errors.get('item_name') %}has-error{% endif %}">
+          <label for="item_name">Item name <span aria-hidden="true" style="color: var(--rose)">*</span></label>
+          <input class="input" id="item_name" name="item_name" type="text" maxlength="200"
+                 value="{{ form.item_name or form['item_name'] or '' }}" placeholder="e.g. Black leather wallet" required>
+          {% if errors.get('item_name') %}<div class="field-error">{{ errors.item_name }}</div>{% endif %}
+        </div>
+        <div class="field {% if errors.get('category') %}has-error{% endif %}">
+          <label for="category">Category <span aria-hidden="true" style="color: var(--rose)">*</span></label>
+          <select class="select" id="category" name="category" required>
+            <option value="">Choose a category</option>
+            {% for category in categories %}
+              <option value="{{ category }}" {% if form.category == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.get('category') %}<div class="field-error">{{ errors.category }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="field {% if errors.get('description') %}has-error{% endif %}">
+        <label for="description">Description <span aria-hidden="true" style="color: var(--rose)">*</span></label>
+        <textarea class="textarea" id="description" name="description" maxlength="3000" required
+                  placeholder="Describe the item, what it looks like, and anything inside it.{% if item_type == 'Lost' %} When and where did you last use it?{% else %} Where exactly did you find it?{% endif %}">{{ form.description or form['description'] or '' }}</textarea>
+        {% if errors.get('description') %}<div class="field-error">{{ errors.description }}</div>{% endif %}
+        <div class="hint">At least 10 characters. Mention stickers, scratches, engravings or contents — those details are gold for matching.</div>
+      </div>
+
+      <div class="form-row">
+        <div class="field {% if errors.get('color') %}has-error{% endif %}">
+          <label for="color">Colour <span class="muted tiny">(optional)</span></label>
+          <input class="input" id="color" name="color" type="text" list="colourList" maxlength="50"
+                 value="{{ form.color or form['color'] or '' }}" placeholder="e.g. Black">
+          <datalist id="colourList">
+            {% for colour in colours %}<option value="{{ colour }}">{% endfor %}
+          </datalist>
+          {% if errors.get('color') %}<div class="field-error">{{ errors.color }}</div>{% endif %}
+        </div>
+        <div class="field {% if errors.get('brand') %}has-error{% endif %}">
+          <label for="brand">Brand / model <span class="muted tiny">(optional)</span></label>
+          <input class="input" id="brand" name="brand" type="text" maxlength="100"
+                 value="{{ form.brand or form['brand'] or '' }}" placeholder="e.g. Wildcraft, Apple">
+          {% if errors.get('brand') %}<div class="field-error">{{ errors.brand }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field {% if errors.get('location') %}has-error{% endif %}">
+          <label for="location">{% if item_type == 'Lost' %}Location lost{% else %}Location found{% endif %} <span aria-hidden="true" style="color: var(--rose)">*</span></label>
+          <input class="input" id="location" name="location" type="text" maxlength="200" list="locationList"
+                 value="{{ form.location or form['location'] or '' }}" placeholder="e.g. Library, second floor" required>
+          <datalist id="locationList">
+            <option value="Library"><option value="Block A"><option value="Block B"><option value="Block C">
+            <option value="Canteen"><option value="Auditorium"><option value="Computer Lab">
+            <option value="Sports Ground"><option value="Parking"><option value="Main Gate">
+            <option value="Hostel"><option value="Admin Office">
+          </datalist>
+          {% if errors.get('location') %}<div class="field-error">{{ errors.location }}</div>{% endif %}
+        </div>
+        <div class="field {% if errors.get('item_date') %}has-error{% endif %}">
+          <label for="item_date">{% if item_type == 'Lost' %}Date lost{% else %}Date found{% endif %} <span aria-hidden="true" style="color: var(--rose)">*</span></label>
+          <input class="input" id="item_date" name="item_date" type="date" max="{{ now.strftime('%Y-%m-%d') }}"
+                 value="{{ form.item_date.strftime('%Y-%m-%d') if form.item_date and form.item_date.strftime is defined else (form.item_date or form['item_date'] or '') }}" required>
+          {% if errors.get('item_date') %}<div class="field-error">{{ errors.item_date }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="field {% if errors.get('distinctive_marks') %}has-error{% endif %}">
+        <label for="distinctive_marks">Identifying marks <span class="muted tiny">(optional but powerful)</span></label>
+        <textarea class="textarea" id="distinctive_marks" name="distinctive_marks" maxlength="1000"
+                  style="min-height: 84px;" placeholder="e.g. Small flower sticker on the cap, name written inside, scratched corner">{{ form.distinctive_marks or form['distinctive_marks'] or '' }}</textarea>
+        {% if errors.get('distinctive_marks') %}<div class="field-error">{{ errors.distinctive_marks }}</div>{% endif %}
+      </div>
+
+      <div class="field {% if errors.get('image') %}has-error{% endif %}">
+        <label for="image">Photograph <span class="muted tiny">(optional, max 5 MB)</span></label>
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-preview" id="uploadPreview">
+            {% if editing and item.image %}
+              <img src="{{ url_for('uploaded_file', filename=item.image) }}" alt="Current photo">
+            {% else %}
+              <span class="upload-icon">{{ icon('image', 26) }}</span>
+              <span class="tiny muted">JPG, PNG, GIF or WEBP</span>
+            {% endif %}
+          </div>
+          <div class="upload-copy">
+            <strong>Add a clear photo</strong>
+            <span class="tiny muted">Photos make a match easier to trust. Avoid showing private documents.</span>
+            <label class="btn btn-ghost btn-sm mt-1" for="image">{{ icon('upload', 15) }} Choose image</label>
+            <input class="sr-only" id="image" name="image" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+          </div>
+        </div>
+        {% if errors.get('image') %}<div class="field-error">{{ errors.image }}</div>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary btn-lg" type="submit" data-loading="Saving…">
+          {% if editing %}{{ icon('check', 17) }} Save changes{% else %}{{ icon('send', 17) }} Publish {{ item_type|lower }} report{% endif %}
+        </button>
+        <a class="btn btn-ghost" href="{% if editing %}{{ url_for('item_detail', item_id=item.item_id) }}{% else %}{{ url_for('browse') }}{% endif %}">Cancel</a>
+      </div>
+    </form>
+
+    <aside class="side-stack">
+      <div class="panel">
+        <div class="panel-title"><h3>{{ icon('sparkles', 17) }} How matching works</h3></div>
+        <p class="tiny muted">Every new report is compared with eligible reports on the other side of the board.</p>
+        <div class="stack-sm tiny">
+          <div class="flex items-center justify-between"><span>Item name &amp; keywords</span><strong>22%</strong></div>
+          <div class="flex items-center justify-between"><span>Category</span><strong>18%</strong></div>
+          <div class="flex items-center justify-between"><span>Description similarity</span><strong>16%</strong></div>
+          <div class="flex items-center justify-between"><span>Brand &amp; marks</span><strong>20%</strong></div>
+          <div class="flex items-center justify-between"><span>Location &amp; date</span><strong>18%</strong></div>
+          <div class="flex items-center justify-between"><span>Colour (support only)</span><strong>6%</strong></div>
+        </div>
+        <div class="divider"></div>
+        <p class="tiny muted mb-0">Missing details never count as a match. Colour alone can never produce a strong score.</p>
+      </div>
+
+      <div class="panel" style="background: var(--violet-100); border-color: var(--violet-200);">
+        <div class="panel-title"><h3>{{ icon('shield', 17) }} A quick safety note</h3></div>
+        <p class="tiny mb-0" style="color: var(--violet-800);">
+          Never post passwords, bank details or full ID numbers. If the item is a document, describe it without sharing the sensitive contents.
+        </p>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

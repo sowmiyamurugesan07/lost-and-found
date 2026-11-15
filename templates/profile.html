@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, dash_nav %}
+{% block title %}My profile · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ dash_nav('profile') }}
+
+  <div>
+    <header class="dash-hero reveal">
+      <div>
+        <div class="section-pill">Account</div>
+        <h1>My profile</h1>
+        <p>Keep your details current so finders can reach you after a claim is verified.</p>
+      </div>
+    </header>
+
+    <div class="profile-grid">
+      <aside class="stack">
+        <div class="card profile-card reveal">
+          <span class="avatar lg">{{ profile_user.name|initial }}</span>
+          <h2>{{ profile_user.name }}</h2>
+          <div class="tiny muted">{{ profile_user.email }}</div>
+          <div class="role">
+            <span class="badge {{ 'badge-strong' if profile_user.role == 'admin' else 'badge-verified' if profile_user.role == 'staff' else 'badge-active' }}">{{ profile_user.role }}</span>
+          </div>
+          <div class="profile-stats">
+            <div><div class="num">{{ stats.lost }}</div><div class="lbl">Lost</div></div>
+            <div><div class="num">{{ stats.found }}</div><div class="lbl">Found</div></div>
+            <div><div class="num">{{ stats.returned }}</div><div class="lbl">Returned</div></div>
+          </div>
+          <div class="divider"></div>
+          <p class="tiny muted mb-0">Member since {{ profile_user.created_at|pretty_date }}</p>
+        </div>
+
+        <div class="card card-pad reveal reveal-2" style="background: var(--violet-100); border-color: var(--violet-200);">
+          <div class="flex items-center gap-sm mb-1">
+            {{ icon('lock', 17) }}
+            <strong class="tiny" style="color: var(--violet-900);">Privacy reminder</strong>
+          </div>
+          <p class="tiny mb-0" style="color: var(--violet-800);">
+            Your email and phone are never shown publicly. They unlock only for a claimant whose ownership has been verified, or for administrators.
+          </p>
+        </div>
+      </aside>
+
+      <div class="stack">
+        <section class="panel reveal">
+          <div class="panel-head"><h2>{{ icon('user', 17) }} Personal details</h2></div>
+          <form method="post" action="{{ url_for('profile') }}" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="details">
+            <div class="form-row">
+              <div class="field">
+                <label for="name">Full name</label>
+                <input class="input" id="name" name="name" type="text" value="{{ profile_user.name }}" maxlength="100" required>
+              </div>
+              <div class="field">
+                <label for="email">Email <span class="muted tiny">(cannot be changed here)</span></label>
+                <input class="input" id="email" type="email" value="{{ profile_user.email }}" disabled>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="student_id">Student / staff ID</label>
+                <input class="input" id="student_id" name="student_id" type="text" value="{{ profile_user.student_id or '' }}" maxlength="50">
+              </div>
+              <div class="field">
+                <label for="department">Department</label>
+                <input class="input" id="department" name="department" type="text" value="{{ profile_user.department or '' }}" maxlength="100">
+              </div>
+            </div>
+            <div class="field">
+              <label for="phone">Phone number</label>
+              <input class="input" id="phone" name="phone" type="tel" value="{{ profile_user.phone or '' }}" maxlength="20" placeholder="+91 98765 43210">
+              <div class="hint">Shown only after a claim is approved, or to admins.</div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">{{ icon('check', 16) }} Save details</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel reveal reveal-2">
+          <div class="panel-head"><h2>{{ icon('lock', 17) }} Change password</h2></div>
+          <form method="post" action="{{ url_for('profile') }}" novalidate>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="password">
+            <div class="field">
+              <label for="current_password">Current password</label>
+              <input class="input" id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="new_password">New password</label>
+                <input class="input" id="new_password" name="new_password" type="password" autocomplete="new-password" required>
+                <div class="hint">At least 8 characters with letters and numbers.</div>
+              </div>
+              <div class="field">
+                <label for="confirm_password">Confirm new password</label>
+                <input class="input" id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-soft" type="submit">{{ icon('shield', 16) }} Update password</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel reveal reveal-3">
+          <div class="panel-head"><h2>{{ icon('logout', 17) }} Session</h2></div>
+          <p class="tiny muted">Signing out clears your session completely. The next person on this device will never see your name or private reports.</p>
+          <form method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-danger" type="submit">{{ icon('logout', 16) }} Sign out of this device</button>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

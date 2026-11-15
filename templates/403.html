@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon %}
+{% block title %}403 · Access denied{% endblock %}
+{% block content %}
+<section class="error-wrap">
+  <div class="error-card">
+    <div class="error-code">403</div>
+    <h1>This area is not yours to open.</h1>
+    <p>You are signed in, but your account does not have permission for this page. If you think that is a mistake, ask a campus administrator.</p>
+    <div class="error-actions">
+      <a class="btn btn-primary" href="{{ url_for('dashboard') }}">{{ icon('home', 16) }} My dashboard</a>
+      <a class="btn btn-ghost" href="{{ url_for('browse') }}">{{ icon('search', 16) }} Browse items</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

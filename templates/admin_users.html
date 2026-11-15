@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, admin_nav %}
+{% block title %}Manage users · Admin · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ admin_nav('users') }}
+
+  <div>
+    <header class="dash-hero reveal">
+      <div>
+        <div class="section-pill">People</div>
+        <h1>User management</h1>
+        <p>Search members, adjust roles and remove accounts when necessary. You cannot change your own role or delete yourself.</p>
+      </div>
+    </header>
+
+    <form class="panel reveal" method="get" action="{{ url_for('admin_users') }}" style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1.2rem;">
+      <div class="field" style="flex:1; min-width:220px; margin:0;">
+        <label for="q">Search members</label>
+        <input class="input" id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Name, email or student ID">
+      </div>
+      <div class="field" style="margin:0; min-width:150px;">
+        <label for="role">Role</label>
+        <select class="select" id="role" name="role">
+          <option value="">All roles</option>
+          {% for role in roles %}
+            <option value="{{ role }}" {% if filters.role == role %}selected{% endif %}>{{ role }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit">{{ icon('search', 16) }} Filter</button>
+      <a class="btn btn-ghost" href="{{ url_for('admin_users') }}">Reset</a>
+    </form>
+
+    <div class="panel reveal">
+      <div class="panel-head">
+        <h2>{{ icon('users', 17) }} Members</h2>
+        <span class="badge badge-active">{{ users|length }} shown</span>
+      </div>
+
+      {% if users %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Member</th><th>ID / Dept</th><th>Reports</th><th>Role</th><th>Joined</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for member in users %}
+                <tr>
+                  <td>
+                    <div class="cell-title">
+                      <span class="avatar" style="width:30px;height:30px;font-size:0.72rem;">{{ member.name|initial }}</span>
+                      <span>
+                        {{ member.name }}
+                        {% if member.user_id == current_user.user_id %}<span class="tiny muted">(you)</span>{% endif %}
+                        <br><span class="tiny muted">{{ member.email }}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="tiny muted">{{ member.student_id or '—' }}<br>{{ member.department or '—' }}</td>
+                  <td><span class="badge badge-active">{{ member.report_count }}</span></td>
+                  <td><span class="badge {{ 'badge-strong' if member.role == 'admin' else 'badge-verified' if member.role == 'staff' else 'badge-active' }}">{{ member.role }}</span></td>
+                  <td class="tiny muted">{{ member.created_at|pretty_date }}</td>
+                  <td>
+                    <div class="row-actions">
+                      {% if member.user_id != current_user.user_id %}
+                        <form method="post" action="{{ url_for('admin_user_role', user_id=member.user_id) }}" class="flex gap-sm items-center">
+                          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                          <label class="sr-only" for="role-{{ member.user_id }}">Change role</label>
+                          <select class="select" id="role-{{ member.user_id }}" name="role" style="padding:0.3rem 1.8rem 0.3rem 0.5rem; font-size:0.74rem; width:auto;">
+                            {% for role in roles %}
+                              <option value="{{ role }}" {% if member.role == role %}selected{% endif %}>{{ role }}</option>
+                            {% endfor %}
+                          </select>
+                          <button class="btn btn-soft btn-sm" type="submit">Update</button>
+                        </form>
+                        <form method="post" action="{{ url_for('admin_user_delete', user_id=member.user_id) }}" data-confirm="Delete {{ member.name }} and all of their reports? This cannot be undone.">
+                          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                          <button class="btn btn-danger btn-sm" type="submit" aria-label="Delete user">{{ icon('trash', 14) }}</button>
+                        </form>
+                      {% else %}
+                        <span class="tiny muted">Current account</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty">
+          <div class="empty-icon">{{ icon('users', 26) }}</div>
+          <h3>No members found</h3>
+          <p>Try a different search or clear the role filter.</p>
+          <a class="btn btn-ghost" href="{{ url_for('admin_users') }}">Reset filters</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="panel mt-3 reveal" style="background: var(--violet-100); border-color: var(--violet-200);">
+      <div class="panel-head"><h2>{{ icon('shield', 17) }} A note on roles</h2></div>
+      <p class="tiny mb-0" style="color: var(--violet-800);">
+        <strong>user</strong> can report and claim. <strong>staff</strong> has the same permissions as a user (useful for labelling).
+        <strong>admin</strong> can moderate reports, review claims and manage members. Create the very first administrator with
+        <code>python scripts/create_admin.py</code> — never by promoting the first person who registers.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, item_card %}
+{% block title %}Lost &amp; Found+ · Every lost item deserves a way home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy reveal">
+      <span class="eyebrow">{{ icon('sparkles', 14) }} Smart campus lost &amp; found</span>
+      <h1>Every lost item deserves <em>a way home.</em></h1>
+      <p class="lede">
+        Report something you lost, post something you found, and let Lost &amp; Found+
+        connect the dots. Our smart matching looks at names, descriptions, places and
+        dates — not just colour — to surface the matches that matter.
+      </p>
+
+      <form class="search-hero" action="{{ url_for('browse') }}" method="get" role="search">
+        {{ icon('search', 19) }}
+        <input type="search" name="q" placeholder="Search a wallet, bottle, ID card…" aria-label="Search lost and found items">
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+
+      <div class="hero-actions mt-3">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('report_lost') }}">{{ icon('plus', 18) }} Report a lost item</a>
+        <a class="btn btn-ghost btn-lg" href="{{ url_for('report_found') }}">{{ icon('package', 18) }} I found something</a>
+      </div>
+
+      <div class="hero-note">
+        <span class="dot"></span>
+        {{ stats.returned }} items already reunited · {{ stats.users }} campus members
+      </div>
+    </div>
+
+    <div class="hero-art reveal reveal-2" aria-hidden="true">
+      <div class="blob"></div>
+      <div class="blob two"></div>
+
+      <div class="floating-card fc-match">
+        <div class="fc-top">
+          <span class="fc-icon">{{ icon('sparkles', 18) }}</span>
+          <div>
+            <strong>Possible match found</strong>
+            <span>Black wallet · Block B</span>
+          </div>
+        </div>
+        <div class="fc-score">87% <small>match score</small></div>
+        <div class="fc-bar"><i style="--w: 87%"></i></div>
+      </div>
+
+      <div class="floating-card fc-lost">
+        <div class="fc-top">
+          <span class="fc-icon" style="background: var(--rose-soft); color: #b23a55;">{{ icon('search', 17) }}</span>
+          <div>
+            <strong>Blue Skybag backpack</strong>
+            <span>Lost · Library · 2 days ago</span>
+          </div>
+        </div>
+        <span class="badge badge-lost">Lost report</span>
+      </div>
+
+      <div class="floating-card fc-found">
+        <div class="fc-top">
+          <span class="fc-icon" style="background: var(--mint-soft); color: #16705e;">{{ icon('check', 17) }}</span>
+          <div>
+            <strong>Blue backpack found</strong>
+            <span>Found · Block C · 1 day ago</span>
+          </div>
+        </div>
+        <span class="badge badge-found">Found report</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 1rem;">
+  <div class="container">
+    <div class="stats-grid reveal">
+      <div class="stat-card">
+        <div class="stat-icon">{{ icon('search', 18) }}</div>
+        <div class="num">{{ stats.lost }}</div>
+        <div class="label">Lost reports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: var(--mint-soft); color: #16705e;">{{ icon('package', 18) }}</div>
+        <div class="num">{{ stats.found }}</div>
+        <div class="label">Found reports</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: var(--amber-soft); color: #9a6412;">{{ icon('heart', 18) }}</div>
+        <div class="num">{{ stats.returned }}</div>
+        <div class="label">Items returned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background: var(--pink-soft); color: #b23a55;">{{ icon('users', 18) }}</div>
+        <div class="num">{{ stats.users }}</div>
+        <div class="label">Campus members</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how" style="padding-top: 1rem;">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-pill">How it works</div>
+        <h2>Three small steps. One happy reunion.</h2>
+        <p>No complicated forms, no waiting for an office to open. Just report, match and meet.</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('browse') }}">Browse all items {{ icon('arrow-right', 16) }}</a>
+    </div>
+
+    <div class="steps">
+      <div class="step reveal">
+        <span class="step-n">01</span>
+        <div class="step-icon">{{ icon('edit', 21) }}</div>
+        <h3>Describe what happened</h3>
+        <p>Tell us the item name, category, colour, place and date. A photo and a few identifying marks go a long way.</p>
+      </div>
+      <div class="step reveal reveal-2">
+        <span class="step-n">02</span>
+        <div class="step-icon">{{ icon('sparkles', 21) }}</div>
+        <h3>Let the matching work</h3>
+        <p>Every new report is compared with the opposite side of the board using a weighted, explainable similarity score.</p>
+      </div>
+      <div class="step reveal reveal-3">
+        <span class="step-n">03</span>
+        <div class="step-icon">{{ icon('check', 21) }}</div>
+        <h3>Verify and reunite</h3>
+        <p>Send a claim with something only the owner would know. The finder or an admin verifies it, then the item goes home.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 1.5rem;">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-pill">Fresh on the board</div>
+        <h2>Recently reported items</h2>
+        <p>Newest lost and found reports from across the campus. Maybe one of them is yours.</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('browse', sort='newest') }}">See everything {{ icon('arrow-right', 16) }}</a>
+    </div>
+
+    {% if recent %}
+      <div class="item-grid">
+        {% for item in recent %}{{ item_card(item) }}{% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">{{ icon('package', 28) }}</div>
+        <h3>No reports yet — be the first</h3>
+        <p>The board is fresh and waiting. Report a lost item or post something you found to get things started.</p>
+        <a class="btn btn-primary" href="{{ url_for('report_lost') }}">{{ icon('plus', 16) }} Create the first report</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section" style="padding-top: 1rem;">
+  <div class="container">
+    <div class="card card-pad reveal" style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 2rem; align-items: center;">
+      <div>
+        <div class="section-pill">Why it feels different</div>
+        <h2 style="font-family: var(--font-display); font-size: clamp(1.7rem, 3vw, 2.3rem); color: var(--violet-950);">Not just a colour match.</h2>
+        <p class="muted">
+          A blue bottle and a blue bag are not the same thing. Our scorer weighs the item name,
+          category, TF-IDF description similarity, brand, identifying marks, location and dates —
+          and it re-normalises around missing data so gaps never create fake matches.
+        </p>
+        <div class="flex flex-wrap gap-sm mt-2">
+          <span class="chip">{{ icon('tag', 14) }} Category &amp; keywords</span>
+          <span class="chip">{{ icon('book', 14) }} Description similarity</span>
+          <span class="chip">{{ icon('pin', 14) }} Location proximity</span>
+          <span class="chip">{{ icon('calendar', 14) }} Date compatibility</span>
+          <span class="chip">{{ icon('palette', 14) }} Colour as support only</span>
+        </div>
+        <a class="btn btn-soft mt-3" href="{{ url_for('browse') }}">Try the smart search {{ icon('arrow-right', 16) }}</a>
+      </div>
+
+      <div class="panel" style="box-shadow: none; background: var(--lavender);">
+        <div class="panel-title">
+          <h3>{{ icon('sparkles', 17) }} Match breakdown</h3>
+          <span class="badge badge-strong">87%</span>
+        </div>
+        <div class="stack-sm">
+          <div class="breakdown-row"><span>Name</span><div class="breakdown-bar"><i style="width: 92%"></i></div><span>92%</span></div>
+          <div class="breakdown-row"><span>Category</span><div class="breakdown-bar"><i style="width: 100%"></i></div><span>100%</span></div>
+          <div class="breakdown-row"><span>Description</span><div class="breakdown-bar"><i style="width: 74%"></i></div><span>74%</span></div>
+          <div class="breakdown-row"><span>Brand</span><div class="breakdown-bar"><i style="width: 90%"></i></div><span>90%</span></div>
+          <div class="breakdown-row"><span>Location</span><div class="breakdown-bar"><i style="width: 85%"></i></div><span>85%</span></div>
+          <div class="breakdown-row"><span>Colour</span><div class="breakdown-bar"><i style="width: 100%"></i></div><span>100%</span></div>
+        </div>
+        <p class="tiny muted mt-2 mb-0">Scores are a suggestion, never proof of ownership. A human always verifies before an item is returned.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="safety" style="padding-top: 1rem;">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="section-pill">Safety &amp; privacy</div>
+        <h2>Kind by design, careful by default.</h2>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon" style="background: linear-gradient(140deg, var(--mint), #16705e);">{{ icon('lock', 21) }}</div>
+        <h3>Private by default</h3>
+        <p>Contact details stay hidden until a claim is approved. Every dashboard only ever loads the signed-in user's own records.</p>
+      </div>
+      <div class="step" id="faq">
+        <div class="step-icon" style="background: linear-gradient(140deg, var(--pink), #c94f78);">{{ icon('shield', 21) }}</div>
+        <h3>Human verification</h3>
+        <p>A score never approves a claim on its own. Claimants describe a secret detail and the finder or an admin reviews it.</p>
+      </div>
+      <div class="step">
+        <div class="step-icon" style="background: linear-gradient(140deg, var(--amber), #9a6412);">{{ icon('heart', 21) }}</div>
+        <h3>Built for our campus</h3>
+        <p>Only students and staff create accounts. Reports can be flagged, verified or removed, and returned items leave the active board.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top: 1.5rem;">
+  <div class="container">
+    <div class="cta reveal">
+      <div>
+        <h2>Lost something today?</h2>
+        <p>It takes less than a minute to post a report. And if someone has already found it, our matcher may point you straight to it.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn-primary btn-lg" href="{% if current_user %}{{ url_for('report_lost') }}{% else %}{{ url_for('register') }}{% endif %}">
+          Get started {{ icon('arrow-right', 18) }}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

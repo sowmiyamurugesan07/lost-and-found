@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon %}
+{% block title %}Sign in · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+  <div class="container">
+    <div class="auth-card reveal">
+      <aside class="auth-side">
+        <div>
+          <a class="brand" href="{{ url_for('index') }}">
+            <span class="brand-mark">{{ icon('search', 19) }}</span>
+            <span>Lost &amp; Found<span class="brand-plus">+</span></span>
+          </a>
+          <h2>Welcome back to your campus board.</h2>
+          <p>Your reports, matches and claim requests are waiting exactly where you left them.</p>
+          <ul class="auth-points">
+            <li><span class="tick">{{ icon('check', 13) }}</span> A private dashboard for every member</li>
+            <li><span class="tick">{{ icon('check', 13) }}</span> Match alerts when something looks familiar</li>
+            <li><span class="tick">{{ icon('check', 13) }}</span> Verified claims, not guesswork</li>
+          </ul>
+        </div>
+        <p class="tiny" style="color: rgba(255,255,255,0.55); position: relative; z-index: 1; margin: 0;">
+          “Every lost item deserves a way home.”
+        </p>
+      </aside>
+
+      <div class="auth-form">
+        <h1>Sign in</h1>
+        <p class="sub">Use the email address you registered with.</p>
+
+        <form method="post" action="{{ url_for('login') }}" novalidate>
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          {% if request.args.get('next') %}
+            <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+          {% endif %}
+
+          <div class="field">
+            <label for="email">Email address</label>
+            <div class="input-icon">
+              {{ icon('mail', 17) }}
+              <input class="input" id="email" name="email" type="email" autocomplete="email"
+                     value="{{ email or '' }}" placeholder="you@college.edu" required autofocus>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="input-icon">
+              {{ icon('lock', 17) }}
+              <input class="input" id="password" name="password" type="password"
+                     autocomplete="current-password" placeholder="Your password" required>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg" type="submit">Sign in {{ icon('arrow-right', 17) }}</button>
+        </form>
+
+        <p class="auth-alt">New to Lost &amp; Found+? <a href="{{ url_for('register') }}">Create a free account</a></p>
+        <p class="auth-alt tiny">Forgot your password? Ask a campus administrator to run the password reset script on the server.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

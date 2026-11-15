@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon %}
+{% block title %}Create an account · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+  <div class="container">
+    <div class="auth-card reveal">
+      <aside class="auth-side">
+        <div>
+          <a class="brand" href="{{ url_for('index') }}">
+            <span class="brand-mark">{{ icon('search', 19) }}</span>
+            <span>Lost &amp; Found<span class="brand-plus">+</span></span>
+          </a>
+          <h2>Join a kinder way to find things.</h2>
+          <p>One account gives you reports, smart matches, claim tracking and a personal dashboard.</p>
+          <ul class="auth-points">
+            <li><span class="tick">{{ icon('check', 13) }}</span> Post lost and found reports with photos</li>
+            <li><span class="tick">{{ icon('check', 13) }}</span> See possible matches with clear reasons</li>
+            <li><span class="tick">{{ icon('check', 13) }}</span> Claim only with verifiable details</li>
+            <li><span class="tick">{{ icon('check', 13) }}</span> Your contact info stays private</li>
+          </ul>
+        </div>
+        <p class="tiny" style="color: rgba(255,255,255,0.55); position: relative; z-index: 1; margin: 0;">
+          Already a member? <a href="{{ url_for('login') }}" style="color:#fff; text-decoration: underline;">Sign in here</a>.
+        </p>
+      </aside>
+
+      <div class="auth-form">
+        <h1>Create your account</h1>
+        <p class="sub">Open to students and staff. It only takes a minute.</p>
+
+        <form method="post" action="{{ url_for('register') }}" novalidate>
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+          <div class="field {% if errors.get('name') %}has-error{% endif %}">
+            <label for="name">Full name</label>
+            <input class="input" id="name" name="name" type="text" autocomplete="name"
+                   value="{{ form.name or '' }}" placeholder="e.g. Sowmiya M" required>
+            {% if errors.get('name') %}<div class="field-error">{{ errors.name }}</div>{% endif %}
+          </div>
+
+          <div class="field {% if errors.get('email') %}has-error{% endif %}">
+            <label for="email">College email</label>
+            <input class="input" id="email" name="email" type="email" autocomplete="email"
+                   value="{{ form.email or '' }}" placeholder="you@college.edu" required>
+            {% if errors.get('email') %}<div class="field-error">{{ errors.email }}</div>{% endif %}
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="student_id">Student / staff ID <span class="muted tiny">(optional)</span></label>
+              <input class="input" id="student_id" name="student_id" type="text"
+                     value="{{ form.student_id or '' }}" placeholder="e.g. 21BCA042">
+            </div>
+            <div class="field">
+              <label for="department">Department <span class="muted tiny">(optional)</span></label>
+              <input class="input" id="department" name="department" type="text"
+                     value="{{ form.department or '' }}" placeholder="e.g. BCA">
+            </div>
+          </div>
+
+          <div class="field {% if errors.get('phone') %}has-error{% endif %}">
+            <label for="phone">Phone number <span class="muted tiny">(optional)</span></label>
+            <input class="input" id="phone" name="phone" type="tel" autocomplete="tel"
+                   value="{{ form.phone or '' }}" placeholder="+91 98765 43210">
+            {% if errors.get('phone') %}<div class="field-error">{{ errors.phone }}</div>{% endif %}
+          </div>
+
+          <div class="form-row">
+            <div class="field {% if errors.get('password') %}has-error{% endif %}">
+              <label for="password">Password</label>
+              <input class="input" id="password" name="password" type="password"
+                     autocomplete="new-password" placeholder="At least 8 characters" required>
+              {% if errors.get('password') %}<div class="field-error">{{ errors.password }}</div>{% endif %}
+              <div class="hint">Use letters and numbers.</div>
+            </div>
+            <div class="field {% if errors.get('confirm_password') %}has-error{% endif %}">
+              <label for="confirm_password">Confirm password</label>
+              <input class="input" id="confirm_password" name="confirm_password" type="password"
+                     autocomplete="new-password" placeholder="Repeat password" required>
+              {% if errors.get('confirm_password') %}<div class="field-error">{{ errors.confirm_password }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="check">
+            <input type="checkbox" id="agree" required>
+            <label for="agree" style="margin:0; font-weight:500; font-size:0.8rem; color: var(--ink-soft);">
+              I will only claim items I truly own, and I understand that every claim is verified.
+            </label>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg mt-3" type="submit">Create my account {{ icon('arrow-right', 17) }}</button>
+        </form>
+
+        <p class="auth-alt">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

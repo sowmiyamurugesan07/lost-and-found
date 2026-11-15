@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, admin_nav, item_emoji %}
+{% block title %}Admin dashboard · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ admin_nav('overview', stats.pending_claims) }}
+
+  <div>
+    <div class="admin-banner reveal">
+      <div>
+        <div class="section-pill" style="color: var(--violet-300);">Administrator</div>
+        <h1>Campus control room</h1>
+        <p>Signed in as {{ current_user.name }} · {{ current_user.email }}</p>
+      </div>
+      <form method="post" action="{{ url_for('admin_recalculate') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <button class="btn" type="submit">{{ icon('refresh', 16) }} Recalculate all matches</button>
+      </form>
+    </div>
+
+    <div class="stats-grid reveal" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 1.4rem;">
+      <div class="stat-card admin-stat">
+        <div class="stat-icon">{{ icon('users', 18) }}</div>
+        <div class="num">{{ stats.users }}</div>
+        <div class="label">Registered users</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon" style="background: var(--rose-soft); color:#b23a55;">{{ icon('search', 18) }}</div>
+        <div class="num">{{ stats.lost }}</div>
+        <div class="label">Lost reports</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon" style="background: var(--mint-soft); color:#16705e;">{{ icon('package', 18) }}</div>
+        <div class="num">{{ stats.found }}</div>
+        <div class="label">Found reports</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon" style="background: var(--amber-soft); color:#9a6412;">{{ icon('clock', 18) }}</div>
+        <div class="num">{{ stats.pending_claims }}</div>
+        <div class="label">Pending claims</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon" style="background: var(--mint-soft); color:#16705e;">{{ icon('heart', 18) }}</div>
+        <div class="num">{{ stats.returned }}</div>
+        <div class="label">Returned items</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon" style="background: var(--amber-soft); color:#9a6412;">{{ icon('sparkles', 18) }}</div>
+        <div class="num">{{ stats.matches }}</div>
+        <div class="label">Active matches</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon">{{ icon('chart', 18) }}</div>
+        <div class="num">{{ stats.reports }}</div>
+        <div class="label">Total reports</div>
+      </div>
+      <div class="stat-card admin-stat">
+        <div class="stat-icon" style="background: var(--pink-soft); color:#b23a55;">{{ icon('check', 18) }}</div>
+        <div class="num">{{ stats.returned }}</div>
+        <div class="label">Successfully reunited</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <section class="panel reveal">
+        <div class="panel-head">
+          <h2>{{ icon('grid', 17) }} Latest reports</h2>
+          <a class="link" href="{{ url_for('admin_items') }}">Manage all</a>
+        </div>
+        {% if recent_items %}
+          <div class="mini-list">
+            {% for report in recent_items %}
+              <div class="mini-item">
+                <span class="mini-thumb">
+                  {% if report.image %}<img src="{{ url_for('uploaded_file', filename=report.image) }}" alt="">{% else %}{{ item_emoji(report.category) }}{% endif %}
+                </span>
+                <div class="mini-body">
+                  <strong><a href="{{ url_for('item_detail', item_id=report.item_id) }}">{{ report.item_name }}</a></strong>
+                  <span>{{ report.reporter_name }} · {{ report.location }} · {{ report.item_date|pretty_date }}</span>
+                </div>
+                <div class="mini-meta">
+                  <span class="badge badge-{{ report.item_type|lower }}">{{ report.item_type }}</span>
+                  <span class="badge {{ report.status|status_class }}">{{ 'Returned' if report.is_returned else report.status }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="tiny muted mb-0">No reports have been submitted yet.</p>
+        {% endif %}
+      </section>
+
+      <section class="panel reveal reveal-2">
+        <div class="panel-head">
+          <h2>{{ icon('clock', 17) }} Pending claims</h2>
+          <a class="link" href="{{ url_for('admin_claims', status='Pending') }}">Review queue</a>
+        </div>
+        {% if recent_claims %}
+          <div class="mini-list">
+            {% for claim in recent_claims %}
+              <div class="mini-item">
+                <span class="avatar">{{ claim.claimant_name|initial }}</span>
+                <div class="mini-body">
+                  <strong>{{ claim.claimant_name }}</strong>
+                  <span>claims “{{ claim.item_name }}” · {{ claim.created_at|pretty_date }}</span>
+                </div>
+                <a class="btn btn-soft btn-sm" href="{{ url_for('admin_claims', status='Pending') }}">Review</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty sm" style="border:0; padding: 1rem;">
+            <div class="empty-icon">{{ icon('check', 22) }}</div>
+            <h3>Queue is clear</h3>
+            <p class="tiny mb-0">No pending claims right now.</p>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <div class="dash-grid">
+      <section class="panel reveal">
+        <div class="panel-head">
+          <h2>{{ icon('users', 17) }} Newest members</h2>
+          <a class="link" href="{{ url_for('admin_users') }}">Manage users</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Member</th><th>Role</th><th>Joined</th></tr></thead>
+            <tbody>
+              {% for member in recent_users %}
+                <tr>
+                  <td>
+                    <div class="cell-title">
+                      <span class="avatar" style="width:28px;height:28px;font-size:0.7rem;">{{ member.name|initial }}</span>
+                      <span>{{ member.name }}<br><span class="tiny muted">{{ member.email }}</span></span>
+                    </div>
+                  </td>
+                  <td><span class="badge {{ 'badge-strong' if member.role == 'admin' else 'badge-active' }}">{{ member.role }}</span></td>
+                  <td class="tiny muted">{{ member.created_at|pretty_date }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel reveal reveal-2">
+        <div class="panel-head"><h2>{{ icon('info', 17) }} Admin notes</h2></div>
+        <div class="stack-sm tiny muted">
+          <p class="mb-0">• Approving a claim is a human decision. Use the claimant's private detail and the item itself.</p>
+          <p class="mb-0">• Removing a report deletes its matches and notifications so the board stays clean.</p>
+          <p class="mb-0">• Only mark an item returned after the physical handover is confirmed.</p>
+          <p class="mb-0">• Recalculate matches after bulk edits or if you suspect stale scores.</p>
+        </div>
+        <div class="divider"></div>
+        <a class="btn btn-ghost btn-block btn-sm" href="{{ url_for('browse') }}">{{ icon('eye', 15) }} View public board</a>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon %}
+{% block title %}500 · Something went wrong{% endblock %}
+{% block content %}
+<section class="error-wrap">
+  <div class="error-card">
+    <div class="error-code">500</div>
+    <h1>We hit an unexpected bump.</h1>
+    {% if setup_error %}
+      <p>The database is connected, but its tables are not ready. The site administrator needs to run the database setup script against the deployed database.</p>
+    {% elif database_error %}
+      <p>The application could not connect to its database. The site administrator needs to check the MySQL host, port, user, password and TLS settings.</p>
+    {% else %}
+      <p>Something went wrong on our side. Your data is safe — please try again in a moment.</p>
+    {% endif %}
+    <div class="error-actions">
+      <a class="btn btn-primary" href="{{ url_for('index') }}">{{ icon('home', 16) }} Back home</a>
+      <a class="btn btn-ghost" href="{{ url_for('browse') }}">{{ icon('search', 16) }} Browse items</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

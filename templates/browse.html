@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, item_card %}
+{% block title %}Browse items · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <div class="section-pill">The campus board</div>
+    <h1>Browse lost &amp; found items</h1>
+    <p>Search the whole board, narrow it down with filters, and open any report to see the full story.</p>
+  </div>
+</section>
+
+<div class="container browse-layout">
+  <aside class="card card-pad filter-panel" id="filterPanel">
+    <div class="filter-head">
+      <h2>{{ icon('filter', 17) }} Filters</h2>
+      <a class="filter-reset" href="{{ url_for('browse') }}">Reset</a>
+    </div>
+
+    <form method="get" action="{{ url_for('browse') }}">
+      <div class="field">
+        <label for="f-q">Keyword</label>
+        <input class="input" id="f-q" name="q" type="search" value="{{ filters.q }}" placeholder="Wallet, bottle, ID…">
+      </div>
+
+      <div class="field">
+        <label for="f-type">Type</label>
+        <select class="select" id="f-type" name="type">
+          <option value="">Lost &amp; Found</option>
+          <option value="Lost" {% if filters.type == 'Lost' %}selected{% endif %}>Lost items</option>
+          <option value="Found" {% if filters.type == 'Found' %}selected{% endif %}>Found items</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-category">Category</label>
+        <select class="select" id="f-category" name="category">
+          <option value="">All categories</option>
+          {% for category in categories %}
+            <option value="{{ category }}" {% if filters.category == category %}selected{% endif %}>{{ category }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-color">Colour</label>
+        <select class="select" id="f-color" name="color">
+          <option value="">Any colour</option>
+          {% for colour in colours %}
+            <option value="{{ colour }}" {% if filters.color == colour %}selected{% endif %}>{{ colour }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-location">Location contains</label>
+        <input class="input" id="f-location" name="location" type="text" value="{{ filters.location }}" placeholder="Library, Block B…">
+      </div>
+
+      <div class="form-row" style="gap: 0 0.6rem;">
+        <div class="field">
+          <label for="f-from">From date</label>
+          <input class="input" id="f-from" name="date_from" type="date" value="{{ filters.date_from }}">
+        </div>
+        <div class="field">
+          <label for="f-to">To date</label>
+          <input class="input" id="f-to" name="date_to" type="date" value="{{ filters.date_to }}">
+        </div>
+      </div>
+
+      <input type="hidden" name="sort" value="{{ filters.sort }}">
+      <button class="btn btn-primary btn-block" type="submit">{{ icon('search', 16) }} Apply filters</button>
+    </form>
+  </aside>
+
+  <div>
+    <div class="browse-toolbar">
+      <div class="result-count">
+        <strong>{{ total }}</strong> item{{ '' if total == 1 else 's' }} found
+        {% if filters.q %} for “{{ filters.q }}”{% endif %}
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-ghost btn-sm filter-toggle" type="button" id="filterToggle">
+          {{ icon('filter', 15) }} Filters
+        </button>
+        <form method="get" action="{{ url_for('browse') }}" id="sortForm">
+          {% for key, value in filters.items() %}
+            {% if key not in ['sort'] and value %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}
+          {% endfor %}
+          <label class="sr-only" for="sortSelect">Sort results</label>
+          <select class="select" id="sortSelect" name="sort" data-autosubmit>
+            <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest first</option>
+            <option value="oldest" {% if filters.sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+            <option value="relevance" {% if filters.sort == 'relevance' %}selected{% endif %}>Search relevance</option>
+          </select>
+        </form>
+      </div>
+    </div>
+
+    {% if items %}
+      <div class="item-grid">
+        {% for item in items %}{{ item_card(item) }}{% endfor %}
+      </div>
+
+      {% if pages > 1 %}
+        <nav class="pagination" aria-label="Pagination">
+          <a class="page-link {% if page <= 1 %}disabled{% endif %}" aria-label="Previous page"
+             href="{{ url_for('browse', page=page-1, q=filters.q, type=filters.type, category=filters.category, color=filters.color, location=filters.location, date_from=filters.date_from, date_to=filters.date_to, sort=filters.sort) }}">{{ icon('chevron-left', 16) }}</a>
+          {% for p in range(1, pages + 1) %}
+            {% if p == 1 or p == pages or (p >= page - 1 and p <= page + 1) %}
+              <a class="page-link {% if p == page %}current{% endif %}"
+                 href="{{ url_for('browse', page=p, q=filters.q, type=filters.type, category=filters.category, color=filters.color, location=filters.location, date_from=filters.date_from, date_to=filters.date_to, sort=filters.sort) }}">{{ p }}</a>
+            {% elif p == 2 and page > 3 %}
+              <span class="page-info">…</span>
+            {% elif p == pages - 1 and page < pages - 2 %}
+              <span class="page-info">…</span>
+            {% endif %}
+          {% endfor %}
+          <a class="page-link {% if page >= pages %}disabled{% endif %}" aria-label="Next page"
+             href="{{ url_for('browse', page=page+1, q=filters.q, type=filters.type, category=filters.category, color=filters.color, location=filters.location, date_from=filters.date_from, date_to=filters.date_to, sort=filters.sort) }}">{{ icon('chevron-right', 16) }}</a>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">{{ icon('search', 28) }}</div>
+        <h3>No items match those filters</h3>
+        <p>Try a shorter keyword, remove a filter, or broaden the date range. New reports arrive every day.</p>
+        <div class="flex gap-sm" style="justify-content:center; flex-wrap: wrap;">
+          <a class="btn btn-ghost" href="{{ url_for('browse') }}">Clear all filters</a>
+          <a class="btn btn-primary" href="{{ url_for('report_lost') }}">{{ icon('plus', 16) }} Report a lost item</a>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

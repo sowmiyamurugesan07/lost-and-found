@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, dash_nav, item_emoji %}
+{% block title %}Claims · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ dash_nav('claims') }}
+
+  <div>
+    <header class="dash-hero reveal">
+      <div>
+        <div class="section-pill">Claims</div>
+        <h1>Claim requests</h1>
+        <p>Track the items you are claiming and review requests on the things you found.</p>
+      </div>
+      <a class="btn btn-ghost" href="{{ url_for('browse', type='Found') }}">{{ icon('search', 16) }} Browse found items</a>
+    </header>
+
+    <div class="dash-grid">
+      <section class="panel reveal">
+        <div class="panel-head">
+          <h2>{{ icon('send', 17) }} Claims I sent</h2>
+          <span class="badge badge-active">{{ submitted|length }}</span>
+        </div>
+
+        {% if submitted %}
+          {% for claim in submitted %}
+            <div class="claim-card">
+              <div class="claim-head">
+                <div class="flex items-center gap-sm">
+                  <span class="mini-thumb">
+                    {% if claim.image %}<img src="{{ url_for('uploaded_file', filename=claim.image) }}" alt="">{% else %}{{ item_emoji('Other') }}{% endif %}
+                  </span>
+                  <div>
+                    <strong><a href="{{ url_for('item_detail', item_id=claim.item_id) }}">{{ claim.item_name }}</a></strong>
+                    <div class="tiny muted">Found report by {{ claim.owner_name }} · sent {{ claim.created_at|pretty_date }}</div>
+                  </div>
+                </div>
+                <span class="badge {{ claim.status|status_class }}">{{ claim.status }}</span>
+              </div>
+              <p class="tiny mb-1"><strong>Your message:</strong> {{ claim.message }}</p>
+              <div class="claim-quote"><strong>Your proof:</strong> {{ claim.verification_details }}</div>
+              {% if claim.admin_response %}
+                <p class="tiny muted mt-1 mb-0"><strong>Review note:</strong> {{ claim.admin_response }}</p>
+              {% endif %}
+              {% if claim.status == 'Approved' %}
+                <p class="tiny mt-1 mb-0" style="color: #16705e;">{{ icon('check', 13) }} Approved — open the item to see the finder's contact details and arrange a handover.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty sm">
+            <div class="empty-icon">{{ icon('send', 24) }}</div>
+            <h3>You have not sent any claims</h3>
+            <p class="tiny">If you spot your item in the found board, open it and send a claim with a detail only you would know.</p>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('browse', type='Found') }}">Browse found items</a>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="panel reveal reveal-2">
+        <div class="panel-head">
+          <h2>{{ icon('shield', 17) }} Claims on my reports</h2>
+          {% set pending = received|selectattr('status', 'equalto', 'Pending')|list|length %}
+          <span class="badge {{ 'badge-pending' if pending else 'badge-active' }}">{{ pending }} pending</span>
+        </div>
+
+        {% if received %}
+          {% for claim in received %}
+            <div class="claim-card">
+              <div class="claim-head">
+                <div>
+                  <strong>{{ claim.claimant_name }}</strong>
+                  <div class="tiny muted">{{ claim.claimant_email }}{% if claim.claimant_phone %} · {{ claim.claimant_phone }}{% endif %}</div>
+                </div>
+                <span class="badge {{ claim.status|status_class }}">{{ claim.status }}</span>
+              </div>
+              <p class="tiny mb-1">
+                Wants to claim <a href="{{ url_for('item_detail', item_id=claim.item_id) }}"><strong>{{ claim.item_name }}</strong></a>
+                · {{ claim.created_at|pretty_date }}
+              </p>
+              <p class="tiny mb-1"><strong>Message:</strong> {{ claim.message }}</p>
+              <div class="claim-quote"><strong>Ownership proof:</strong> {{ claim.verification_details }}</div>
+
+              {% if claim.status == 'Pending' %}
+                <div class="claim-actions">
+                  <form method="post" action="{{ url_for('review_claim', claim_id=claim.claim_id) }}" class="flex gap-sm flex-wrap items-center">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <input class="input" name="admin_response" placeholder="Optional note" style="width: 170px; padding: 0.45rem 0.7rem; font-size: 0.78rem;">
+                    <button class="btn btn-success btn-sm" type="submit" name="action" value="approve">{{ icon('check', 14) }} Approve</button>
+                    <button class="btn btn-danger btn-sm" type="submit" name="action" value="reject">{{ icon('x', 14) }} Reject</button>
+                  </form>
+                </div>
+              {% elif claim.status == 'Approved' %}
+                <div class="claim-actions">
+                  <form method="post" action="{{ url_for('complete_claim', claim_id=claim.claim_id) }}" data-confirm="Confirm the item has physically been handed over and mark it as returned?">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-primary btn-sm" type="submit">{{ icon('check', 14) }} Mark as returned</button>
+                  </form>
+                </div>
+              {% elif claim.admin_response %}
+                <p class="tiny muted mt-1 mb-0"><strong>Review note:</strong> {{ claim.admin_response }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty sm">
+            <div class="empty-icon">{{ icon('package', 24) }}</div>
+            <h3>No claims on your reports</h3>
+            <p class="tiny">When someone claims a found item you reported, you can review their proof here.</p>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <div class="panel mt-3 reveal">
+      <div class="panel-head"><h2>{{ icon('info', 17) }} How verification works</h2></div>
+      <div class="steps" style="gap: 0.8rem;">
+        <div class="step" style="padding: 1rem; background: var(--lavender);">
+          <strong class="tiny">1 · Claim</strong>
+          <p class="tiny muted mb-0" style="margin-top:0.3rem;">The claimant describes something only the owner would know — a sticker, an engraving, contents.</p>
+        </div>
+        <div class="step" style="padding: 1rem; background: var(--lavender);">
+          <strong class="tiny">2 · Review</strong>
+          <p class="tiny muted mb-0" style="margin-top:0.3rem;">The finder or an admin compares that detail with the item before approving.</p>
+        </div>
+        <div class="step" style="padding: 1rem; background: var(--lavender);">
+          <strong class="tiny">3 · Return</strong>
+          <p class="tiny muted mb-0" style="margin-top:0.3rem;">After a safe handover, the item is marked returned and leaves the active match pool.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

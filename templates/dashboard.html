@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, item_emoji, dash_nav %}
+{% block title %}Dashboard · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ dash_nav('overview', counts) }}
+
+  <div>
+    <header class="dash-hero reveal">
+      <div>
+        <div class="section-pill">Your dashboard</div>
+        <h1>Welcome, {{ current_user.name.split()[0] }}! 🌷</h1>
+        <p>Here is what is happening with your reports, matches and claims.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{{ url_for('report_lost') }}">{{ icon('plus', 16) }} Report lost</a>
+        <a class="btn btn-ghost" href="{{ url_for('report_found') }}">{{ icon('package', 16) }} Report found</a>
+      </div>
+    </header>
+
+    <div class="dash-cards">
+      <div class="dash-stat reveal">
+        <div class="top"><span class="lbl">My lost reports</span><span class="ico">{{ icon('search', 16) }}</span></div>
+        <div class="num">{{ counts.lost }}</div>
+      </div>
+      <div class="dash-stat reveal reveal-2">
+        <div class="top"><span class="lbl">My found reports</span><span class="ico" style="background: var(--mint-soft); color:#16705e;">{{ icon('package', 16) }}</span></div>
+        <div class="num">{{ counts.found }}</div>
+      </div>
+      <div class="dash-stat reveal reveal-3">
+        <div class="top"><span class="lbl">Possible matches</span><span class="ico" style="background: var(--amber-soft); color:#9a6412;">{{ icon('sparkles', 16) }}</span></div>
+        <div class="num">{{ counts.matches }}</div>
+      </div>
+      <div class="dash-stat reveal reveal-4">
+        <div class="top"><span class="lbl">Items returned</span><span class="ico" style="background: var(--pink-soft); color:#b23a55;">{{ icon('heart', 16) }}</span></div>
+        <div class="num">{{ counts.returned }}</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <section class="panel reveal">
+        <div class="panel-head">
+          <h2>{{ icon('grid', 17) }} My reports</h2>
+          <a class="link" href="{{ url_for('browse') }}">Browse all</a>
+        </div>
+        {% if my_items %}
+          <div class="mini-list">
+            {% for report in my_items %}
+              <div class="mini-item">
+                <span class="mini-thumb">
+                  {% if report.image %}
+                    <img src="{{ url_for('uploaded_file', filename=report.image) }}" alt="">
+                  {% else %}{{ item_emoji(report.category) }}{% endif %}
+                </span>
+                <div class="mini-body">
+                  <strong><a href="{{ url_for('item_detail', item_id=report.item_id) }}">{{ report.item_name }}</a></strong>
+                  <span>{{ report.location }} · {{ report.item_date|pretty_date }}</span>
+                </div>
+                <div class="mini-meta">
+                  <span class="badge badge-{{ report.item_type|lower }}">{{ report.item_type }}</span>
+                  <span class="badge {{ report.status|status_class }}">{{ 'Returned' if report.is_returned else report.status }}</span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <a class="btn btn-ghost btn-block btn-sm mt-2" href="{{ url_for('browse', type='Lost') }}">See all my reports</a>
+        {% else %}
+          <div class="empty sm">
+            <div class="empty-icon">{{ icon('edit', 22) }}</div>
+            <h3>No reports yet</h3>
+            <p class="tiny">Lost something? Post your first report and let the matching engine look for it.</p>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('report_lost') }}">{{ icon('plus', 14) }} Report lost item</a>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="panel reveal reveal-2" id="matches">
+        <div class="panel-head">
+          <h2>{{ icon('sparkles', 17) }} Matches for you</h2>
+          {% if notifications %}
+            <form method="post" action="{{ url_for('notifications_read') }}">
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-ghost btn-sm" type="submit">Mark read</button>
+            </form>
+          {% endif %}
+        </div>
+
+        {% if matches %}
+          <div class="match-list">
+            {% for match in matches %}
+              {% set details = match.details %}
+              {% set mine = match.lost_item_id if match.lost_user_id == current_user.user_id else match.found_item_id %}
+              {% set other = match.found_item_id if match.lost_user_id == current_user.user_id else match.lost_item_id %}
+              <a class="match-card" href="{{ url_for('item_detail', item_id=other) }}" style="display:block;">
+                <div class="match-top">
+                  <div class="score-ring" style="--score: {{ match.match_score }}"><span>{{ match.match_score|round|int }}%</span></div>
+                  <div class="match-info">
+                    <strong>{{ match.lost_name }} <span class="muted">↔</span> {{ match.found_name }}</strong>
+                    <span class="sub">{{ 'Your lost report' if match.lost_user_id == current_user.user_id else 'Your found report' }} · {{ details.label }}</span>
+                  </div>
+                </div>
+                {% if details.reasons %}
+                  <div class="match-reasons">
+                    {% for reason in details.reasons[:2] %}<span class="reason-chip">{{ reason }}</span>{% endfor %}
+                  </div>
+                {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty sm">
+            <div class="empty-icon">{{ icon('sparkles', 22) }}</div>
+            <h3>No matches yet</h3>
+            <p class="tiny">We compare every new report with yours. When something similar appears, it will show up here.</p>
+          </div>
+        {% endif %}
+
+        {% if notifications %}
+          <div class="divider"></div>
+          <h3 class="tiny" style="text-transform:uppercase; letter-spacing:0.08em; color: var(--ink-mute);">Recent notifications</h3>
+          <div class="notif-list">
+            {% for note in notifications %}
+              <div class="notif {% if not note.is_read %}unread{% endif %}">
+                <span class="notif-dot"></span>
+                <div class="notif-body">
+                  <div>{{ note.message }}</div>
+                  <time>{{ note.created_at|pretty_date }}</time>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <div class="dash-grid">
+      <section class="panel reveal">
+        <div class="panel-head">
+          <h2>{{ icon('send', 17) }} My claim requests</h2>
+          <a class="link" href="{{ url_for('claims') }}">Manage claims</a>
+        </div>
+        {% if my_claims %}
+          <div class="mini-list">
+            {% for claim in my_claims %}
+              <div class="mini-item">
+                <span class="mini-thumb">
+                  {% if claim.image %}<img src="{{ url_for('uploaded_file', filename=claim.image) }}" alt="">{% else %}{{ item_emoji('Other') }}{% endif %}
+                </span>
+                <div class="mini-body">
+                  <strong><a href="{{ url_for('item_detail', item_id=claim.item_id) }}">{{ claim.item_name }}</a></strong>
+                  <span>Claim #{{ claim.claim_id }} · {{ claim.created_at|pretty_date }}</span>
+                </div>
+                <span class="badge {{ claim.status|status_class }}">{{ claim.status }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty sm">
+            <div class="empty-icon">{{ icon('package', 22) }}</div>
+            <h3>No claims yet</h3>
+            <p class="tiny">Found something on the board that is yours? Open the report and send a claim with proof.</p>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('browse', type='Found') }}">Browse found items</a>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="panel reveal reveal-2">
+        <div class="panel-head">
+          <h2>{{ icon('shield', 17) }} Claims to review</h2>
+          <span class="badge {{ 'badge-pending' if received_claims else 'badge-active' }}">{{ received_claims|length }} pending</span>
+        </div>
+        {% if received_claims %}
+          <div class="mini-list">
+            {% for claim in received_claims %}
+              <div class="mini-item">
+                <span class="avatar">{{ claim.claimant_name|initial }}</span>
+                <div class="mini-body">
+                  <strong>{{ claim.claimant_name }}</strong>
+                  <span>wants to claim “{{ claim.item_name }}”</span>
+                </div>
+                <a class="btn btn-soft btn-sm" href="{{ url_for('item_detail', item_id=claim.item_id) }}">Review</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="tiny muted mb-0">No pending claim requests on your found reports.</p>
+        {% endif %}
+
+        <div class="divider"></div>
+        <div class="flex items-center gap-sm">
+          <span class="ico" style="width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--violet-100);color:var(--violet-700);">{{ icon('info', 17) }}</span>
+          <p class="tiny muted mb-0">A match score is never enough on its own. Always verify ownership before handing an item over.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

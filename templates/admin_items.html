@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, admin_nav, item_emoji %}
+{% block title %}Manage reports · Admin · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ admin_nav('items') }}
+
+  <div>
+    <header class="dash-hero reveal">
+      <div>
+        <div class="section-pill">Moderation</div>
+        <h1>Report management</h1>
+        <p>Verify legitimate reports, remove duplicates or fakes, and keep the board trustworthy.</p>
+      </div>
+      <a class="btn btn-primary" href="{{ url_for('report_found') }}">{{ icon('plus', 16) }} Add a report</a>
+    </header>
+
+    <form class="panel reveal" method="get" action="{{ url_for('admin_items') }}" style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1.2rem;">
+      <div class="field" style="flex:1; min-width:200px; margin:0;">
+        <label for="q">Search</label>
+        <input class="input" id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Item, reporter name or email">
+      </div>
+      <div class="field" style="margin:0; min-width:140px;">
+        <label for="type">Type</label>
+        <select class="select" id="type" name="type">
+          <option value="">All</option>
+          <option value="Lost" {% if filters.type == 'Lost' %}selected{% endif %}>Lost</option>
+          <option value="Found" {% if filters.type == 'Found' %}selected{% endif %}>Found</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0; min-width:150px;">
+        <label for="status">Status</label>
+        <select class="select" id="status" name="status">
+          <option value="">All statuses</option>
+          {% for status in ['Active', 'Verified', 'Matched', 'Returned', 'Removed'] %}
+            <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary" type="submit">{{ icon('search', 16) }} Filter</button>
+      <a class="btn btn-ghost" href="{{ url_for('admin_items') }}">Reset</a>
+    </form>
+
+    <div class="panel reveal">
+      <div class="panel-head">
+        <h2>All reports</h2>
+        <span class="badge badge-active">{{ items|length }} shown</span>
+      </div>
+
+      {% if items %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Type</th><th>Reporter</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for report in items %}
+                <tr>
+                  <td>
+                    <div class="cell-title">
+                      <span class="mini-thumb" style="width:34px;height:34px;font-size:0.95rem;">
+                        {% if report.image %}<img src="{{ url_for('uploaded_file', filename=report.image) }}" alt="">{% else %}{{ item_emoji(report.category) }}{% endif %}
+                      </span>
+                      <span>
+                        <a href="{{ url_for('item_detail', item_id=report.item_id) }}">{{ report.item_name }}</a><br>
+                        <span class="tiny muted">{{ report.category }} · {{ report.location }}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-{{ report.item_type|lower }}">{{ report.item_type }}</span></td>
+                  <td class="tiny">{{ report.reporter_name }}<br><span class="muted">{{ report.reporter_email }}</span></td>
+                  <td class="tiny muted">{{ report.item_date|pretty_date }}</td>
+                  <td><span class="badge {{ report.status|status_class }}">{{ 'Returned' if report.is_returned else report.status }}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      {% if not report.is_returned %}
+                        <form method="post" action="{{ url_for('admin_item_status', item_id=report.item_id) }}" class="flex gap-sm items-center">
+                          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                          <label class="sr-only" for="status-{{ report.item_id }}">Set status</label>
+                          <select class="select" id="status-{{ report.item_id }}" name="status" style="padding:0.3rem 1.8rem 0.3rem 0.5rem; font-size:0.74rem; width:auto;">
+                            {% for option in ['Active', 'Verified', 'Matched', 'Removed'] %}
+                              <option value="{{ option }}" {% if report.status == option %}selected{% endif %}>{{ option }}</option>
+                            {% endfor %}
+                          </select>
+                          <button class="btn btn-soft btn-sm" type="submit">Save</button>
+                        </form>
+                        <form method="post" action="{{ url_for('delete_item', item_id=report.item_id) }}" data-confirm="Delete “{{ report.item_name }}” permanently?">
+                          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                          <button class="btn btn-danger btn-sm" type="submit" aria-label="Delete report">{{ icon('trash', 14) }}</button>
+                        </form>
+                      {% else %}
+                        <span class="tiny muted">Closed</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty">
+          <div class="empty-icon">{{ icon('search', 26) }}</div>
+          <h3>No reports match those filters</h3>
+          <p>Try a different keyword or reset the filters.</p>
+          <a class="btn btn-ghost" href="{{ url_for('admin_items') }}">Reset filters</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

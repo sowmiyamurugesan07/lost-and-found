@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon, admin_nav %}
+{% block title %}Review claims · Admin · Lost &amp; Found+{% endblock %}
+
+{% block content %}
+<div class="container dash-layout">
+  {{ admin_nav('claims') }}
+
+  <div>
+    <header class="dash-hero reveal">
+      <div>
+        <div class="section-pill">Verification</div>
+        <h1>Claim review</h1>
+        <p>Read the private ownership proof, check the report, then approve, reject or close the claim.</p>
+      </div>
+    </header>
+
+    <div class="admin-tabs reveal">
+      <a class="admin-tab {% if not status %}active{% endif %}" href="{{ url_for('admin_claims') }}">All</a>
+      {% for tab in ['Pending', 'Approved', 'Completed', 'Rejected'] %}
+        <a class="admin-tab {% if status == tab %}active{% endif %}" href="{{ url_for('admin_claims', status=tab) }}">{{ tab }}</a>
+      {% endfor %}
+    </div>
+
+    {% if claims %}
+      <div class="stack">
+        {% for claim in claims %}
+          <article class="panel reveal">
+            <div class="claim-head">
+              <div class="flex items-center gap-sm">
+                <span class="avatar">{{ claim.claimant_name|initial }}</span>
+                <div>
+                  <strong>{{ claim.claimant_name }}</strong>
+                  <div class="tiny muted">{{ claim.claimant_email }}{% if claim.claimant_phone %} · {{ claim.claimant_phone }}{% endif %}</div>
+                </div>
+              </div>
+              <div class="flex gap-sm items-center flex-wrap">
+                <span class="badge badge-{{ claim.item_type|lower }}">{{ claim.item_type }}</span>
+                <span class="badge {{ claim.status|status_class }}">{{ claim.status }}</span>
+              </div>
+            </div>
+
+            <div class="detail-grid" style="margin: 0.6rem 0; padding: 0.8rem 0;">
+              <div class="detail-fact">
+                <div class="k">Item</div>
+                <div class="v"><a href="{{ url_for('item_detail', item_id=claim.item_id) }}">{{ claim.item_name }}</a></div>
+              </div>
+              <div class="detail-fact">
+                <div class="k">Owner / reporter</div>
+                <div class="v">{{ claim.owner_name }}</div>
+              </div>
+              <div class="detail-fact">
+                <div class="k">Location</div>
+                <div class="v">{{ claim.location or '—' }}</div>
+              </div>
+              <div class="detail-fact">
+                <div class="k">Submitted</div>
+                <div class="v">{{ claim.created_at|pretty_date }}</div>
+              </div>
+            </div>
+
+            <p class="tiny mb-1"><strong>Claimant message:</strong> {{ claim.message }}</p>
+            <div class="claim-quote"><strong>Private ownership proof:</strong> {{ claim.verification_details }}</div>
+            {% if claim.admin_response %}
+              <p class="tiny muted mt-1 mb-0"><strong>Review note:</strong> {{ claim.admin_response }}</p>
+            {% endif %}
+
+            {% if claim.status == 'Pending' %}
+              <form class="claim-actions" method="post" action="{{ url_for('review_claim', claim_id=claim.claim_id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <input class="input" name="admin_response" placeholder="Reason or note (optional but helpful)" style="flex:1; min-width:220px; padding:0.5rem 0.7rem; font-size:0.82rem;">
+                <button class="btn btn-success btn-sm" type="submit" name="action" value="approve">{{ icon('check', 14) }} Approve claim</button>
+                <button class="btn btn-danger btn-sm" type="submit" name="action" value="reject">{{ icon('x', 14) }} Reject</button>
+              </form>
+            {% elif claim.status == 'Approved' and not claim.is_returned %}
+              <form class="claim-actions" method="post" action="{{ url_for('complete_claim', claim_id=claim.claim_id) }}" data-confirm="Confirm the physical handover and mark this item as returned?">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-primary btn-sm" type="submit">{{ icon('check', 14) }} Mark item returned</button>
+                <span class="tiny muted">Only after the owner has physically received the item.</span>
+              </form>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">
+        <div class="empty-icon">{{ icon('shield', 26) }}</div>
+        <h3>No claims in this view</h3>
+        <p>Nothing matches this status right now. Check another tab or wait for new claims.</p>
+        <a class="btn btn-ghost" href="{{ url_for('admin_claims') }}">View all claims</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

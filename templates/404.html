@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros.html" import icon %}
+{% block title %}404 · Page not found{% endblock %}
+{% block content %}
+<section class="error-wrap">
+  <div class="error-card">
+    <div class="error-code">404</div>
+    <h1>This page wandered off.</h1>
+    <p>The link may be old, or the item could have been removed. Let us get you back to familiar ground.</p>
+    <div class="error-actions">
+      <a class="btn btn-primary" href="{{ url_for('index') }}">{{ icon('home', 16) }} Back home</a>
+      <a class="btn btn-ghost" href="{{ url_for('browse') }}">{{ icon('search', 16) }} Browse items</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
